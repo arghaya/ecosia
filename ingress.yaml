@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: favtree-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET"
+spec:
+  rules:
+    - host: local.ecosia.org
+      http:
+        paths:
+          - path: "/tree"
+            pathType: Prefix
+            backend:
+              service:
+                name: favtree-service
+                port:
+                  number: 80
