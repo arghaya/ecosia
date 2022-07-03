@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+     - apt update && apt install wget curl sudo -y
+     - sudo n 18
+     - node -v && which node
+     - curl -sS -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
+     - curl -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/kubectl
+     - chmod +x ./kubectl ./aws-iam-authenticator
+     - export PATH=$PWD/:$PATH
+
+  pre_build:
+    commands:
+     - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+     - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+     - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --role-arn $EKS_KUBECTL_ROLE_ARN 
+     - cd app && npm install && cd ../  
+     - CUSTOM_TAG=`date +%s`
+     - sed -i 's%{{ IMAGE_TAG }}%'$CUSTOM_TAG'%g' kubernetes/k8s.yaml
+
+  build:
+    commands:
+     - cd app
+     - docker build -t arghaya/ecosia-fav-tree:$CUSTOM_TAG .
+     - docker push arghaya/ecosia-fav-tree:$CUSTOM_TAG
+     - cd ..
+     - kubectl apply kubernetes/k8s.yaml
+     - kubectl apply kubernetes/ingress.yaml

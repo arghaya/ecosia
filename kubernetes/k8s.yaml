@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "favtree-service"
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: NodePort
+  selector:
+    app: "favtree"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: favtree-service
+  labels:
+    app: favtree
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: favtree
+  template:
+    metadata:
+      labels:
+        app: favtree
+    spec:
+      containers:
+        - name: favtree
+          image: "arghaya/ecosia-fav-tree:"{{ IMAGE_TAG }}"
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: "1024Mi"
+              cpu: "1"
+            requests:
+              memory: "100Mi"
+              cpu: "125m"
+          ports:
+            - containerPort: 80
